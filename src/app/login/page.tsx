@@ -190,31 +190,6 @@ export default function LoginPage() {
             </button>
           </p>
         </div>
-
-        {/* Demo accounts for testing */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-gray-800 mb-3 font-semibold">
-            Demo Accounts:
-          </p>
-          <div className="space-y-2">
-            <div className="bg-white p-2 rounded border">
-              <p className="text-sm text-gray-700 font-medium">
-                Username: demo
-              </p>
-              <p className="text-sm text-gray-700 font-medium">
-                Password: demo123
-              </p>
-            </div>
-            <div className="bg-white p-2 rounded border">
-              <p className="text-sm text-gray-700 font-medium">
-                Username: admin
-              </p>
-              <p className="text-sm text-gray-700 font-medium">
-                Password: admin
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
