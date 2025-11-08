@@ -1,0 +1,70 @@
+# Production Docker Compose
+# Use this for production deployment with PostgreSQL
+
+version: '3.8'
+
+services:
+  # Next.js Production App
+  timesheet-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://timesheet_user:timesheet_password@db:5432/timesheet
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - timesheet-prod-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=timesheet
+      - POSTGRES_USER=timesheet_user
+      - POSTGRES_PASSWORD=timesheet_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - timesheet-prod-network
+    restart: unless-stopped
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - timesheet-prod-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - timesheet-prod
+    networks:
+      - timesheet-prod-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  timesheet-prod-network:
+    driver: bridge

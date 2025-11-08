@@ -1,0 +1,31 @@
+# Development Docker Compose
+# Use this for local development with hot reload and SQLite
+
+version: '3.8'
+
+services:
+  # Next.js Development Server
+  timesheet-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./dev.db
+      - NEXTAUTH_SECRET=dev-secret-key
+      - NEXTAUTH_URL=http://localhost:3000
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - timesheet-dev-network
+    restart: unless-stopped
+    command: npm run dev
+
+networks:
+  timesheet-dev-network:
+    driver: bridge
