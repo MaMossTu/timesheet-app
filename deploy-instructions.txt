@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# คำสั่งสำหรับ push ไป GitHub
+# เปลี่ยน YOUR_GITHUB_USERNAME เป็น username จริงของท่าน
+
+echo "Replace YOUR_GITHUB_USERNAME with your actual GitHub username, then run:"
+echo ""
+echo "git remote add origin https://github.com/YOUR_GITHUB_USERNAME/timesheet-app.git"
+echo "git branch -M main"
+echo "git push -u origin main"
+echo ""
+echo "Example:"
+echo "git remote add origin https://github.com/johndoe/timesheet-app.git"
