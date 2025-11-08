@@ -48,6 +48,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const monthInputRef = useRef<HTMLInputElement>(null);
+  const calendarRef = useRef<any>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -70,6 +71,16 @@ export default function Home() {
       router.push("/login");
     }
   }, [user, isLoading, router]);
+
+  // Update calendar when selectedDate changes
+  useEffect(() => {
+    if (calendarRef.current && viewMode === "calendar") {
+      const api = calendarRef.current.getApi();
+      if (api) {
+        api.gotoDate(selectedDate);
+      }
+    }
+  }, [selectedDate, viewMode]);
 
   // Export Functions
   const downloadXLSX = async () => {
@@ -1315,6 +1326,56 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Month Navigation Buttons */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  const prevMonth = new Date(selectedDate);
+                  prevMonth.setMonth(prevMonth.getMonth() - 1);
+                  setSelectedDate(prevMonth);
+                }}
+                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
+                title="Previous month"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => {
+                  const nextMonth = new Date(selectedDate);
+                  nextMonth.setMonth(nextMonth.getMonth() + 1);
+                  setSelectedDate(nextMonth);
+                }}
+                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
+                title="Next month"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
+
             {/* Month/Year Picker */}
             <div className="relative group">
               <div
@@ -1418,14 +1479,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm text-sm"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Time Entry
-            </button>
           </div>
         </div>
 
@@ -1433,6 +1486,7 @@ export default function Home() {
         {viewMode === "calendar" ? (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <TimeTrackingCalendar
+              ref={calendarRef}
               timeEntries={timeEntries.filter(
                 (entry) => entry.companyId === selectedCompany?.id
               )}
@@ -1491,16 +1545,9 @@ export default function Home() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No time entries yet
                   </h3>
-                  <p className="text-gray-500 mb-6">
-                    Start tracking your work time
+                  <p className="text-gray-500">
+                    คลิกที่วันในปฏิทินเพื่อเพิ่มข้อมูลการทำงาน
                   </p>
-                  <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Time Entry
-                  </button>
                 </div>
               ) : (
                 timeEntries
