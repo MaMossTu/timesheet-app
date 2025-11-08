@@ -1,0 +1,27 @@
+{
+  "name": "Timesheet App - การบันทึกเวลาทำงาน",
+  "short_name": "Timesheet",
+  "description": "แอปพลิเคชันบันทึกเวลาทำงานสำหรับไทย - ง่าย รวดเร็ว และมีประสิทธิภาพ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"]
+}
