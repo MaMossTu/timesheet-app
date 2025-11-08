@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Mock users data (replace with real database in production)
+const mockUsers = [
+  {
+    id: "1",
+    email: "admin@example.com",
+    password: "admin123", // In production, this should be hashed
+    name: "Admin User",
+    username: "admin",
+  },
+  {
+    id: "2",
+    email: "user@example.com",
+    password: "user123",
+    name: "Regular User",
+    username: "user",
+  },
+];
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // หาผู้ใช้ในฐานข้อมูล (ใช้ plaintext password ชั่วคราว)
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // หาผู้ใช้ใน mock data
+    const user = mockUsers.find((u) => u.email === email);
 
     if (!user || user.password !== password) {
       return NextResponse.json(

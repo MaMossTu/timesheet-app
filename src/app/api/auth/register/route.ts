@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,32 +11,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ตรวจสอบว่า email ซ้ำหรือไม่
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    // สำหรับ demo version นี้ จะ return success เสมอ
+    // ใน production ควรใช้ database จริง
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "Email นี้มีการใช้งานแล้ว" },
-        { status: 400 }
-      );
-    }
-
-    // สร้างผู้ใช้ใหม่ (ใช้ plaintext password ชั่วคราว)
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password, // ในการใช้งานจริงควร hash ด้วย bcrypt
-        name: name || "ผู้ใช้ใหม่",
-      },
-    });
-
-    // ส่งผลลัพธ์กลับ (ไม่รวม password)
-    const { password: _, ...userWithoutPassword } = user;
+    // สร้าง mock user object
+    const user = {
+      id: Date.now().toString(),
+      email,
+      name: name || "ผู้ใช้ใหม่",
+      username: email.split("@")[0],
+    };
 
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: user,
       message: "สมัครสมาชิกสำเร็จ",
     });
   } catch (error) {
