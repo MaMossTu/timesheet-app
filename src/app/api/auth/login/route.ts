@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
       message: "Login สำเร็จ",
     });
   } catch (error) {
-    console.error("Login error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

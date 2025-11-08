@@ -6,7 +6,7 @@ export const secureStorage = {
       const encrypted = btoa(JSON.stringify(value));
       localStorage.setItem(key, encrypted);
     } catch (error) {
-      console.error("Storage error:", error);
+      // Silently fail
     }
   },
 
@@ -16,7 +16,6 @@ export const secureStorage = {
       if (!encrypted) return null;
       return JSON.parse(atob(encrypted));
     } catch (error) {
-      console.error("Storage error:", error);
       return null;
     }
   },

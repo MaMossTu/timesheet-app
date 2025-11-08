@@ -158,7 +158,6 @@ export const TimeTrackingCalendar = forwardRef<any, TimeTrackingCalendarProps>(
     const events = [...timeEvents, ...holidayEvents];
 
     const handleDateClick = (info: any) => {
-      console.log("Date clicked:", info.date);
       // Create a proper local date to avoid timezone issues
       const clickedDate = new Date(info.date);
       const localDate = new Date(
@@ -166,14 +165,12 @@ export const TimeTrackingCalendar = forwardRef<any, TimeTrackingCalendarProps>(
         clickedDate.getMonth(),
         clickedDate.getDate()
       );
-      console.log("Local date created:", localDate);
       if (onDateClick) {
         onDateClick(localDate);
       }
     };
 
     const handleDateSelect = (selectInfo: any) => {
-      console.log("Date selected:", selectInfo.start);
       // Create a proper local date to avoid timezone issues
       const selectedDate = new Date(selectInfo.start);
       const localDate = new Date(
@@ -181,14 +178,12 @@ export const TimeTrackingCalendar = forwardRef<any, TimeTrackingCalendarProps>(
         selectedDate.getMonth(),
         selectedDate.getDate()
       );
-      console.log("Local date created:", localDate);
       if (onDateClick) {
         onDateClick(localDate);
       }
     };
 
     const handleEventClick = (clickInfo: any) => {
-      console.log("Event clicked:", clickInfo.event);
       const eventType = clickInfo.event.extendedProps.type;
 
       if (eventType === "timeEntry") {

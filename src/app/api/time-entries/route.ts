@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ timeEntries });
   } catch (error) {
-    console.error("GET time entries error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -39,7 +38,6 @@ export async function POST(request: NextRequest) {
       message: "บันทึกเวลาทำงานสำเร็จ",
     });
   } catch (error) {
-    console.error("POST time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -61,7 +59,6 @@ export async function PUT(request: NextRequest) {
       message: "อัปเดตเวลาทำงานสำเร็จ",
     });
   } catch (error) {
-    console.error("PUT time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -84,7 +81,6 @@ export async function DELETE(request: NextRequest) {
       message: "ลบเวลาทำงานสำเร็จ",
     });
   } catch (error) {
-    console.error("DELETE time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

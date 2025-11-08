@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       message: "สมัครสมาชิกสำเร็จ",
     });
   } catch (error) {
-    console.error("Register error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

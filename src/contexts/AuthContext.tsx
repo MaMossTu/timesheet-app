@@ -167,7 +167,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return false;
     } catch (error) {
-      console.error("Login error:", error);
       return false;
     }
   };
@@ -212,7 +211,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("user", JSON.stringify(newUser));
       return true;
     } catch (error) {
-      console.error("Register error:", error);
       return false;
     }
   };
@@ -241,7 +239,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (existingEntryForDate) {
-      console.error("Cannot add entry - already exists for date:", entryDate);
       alert(
         `⚠️ ไม่สามารถเพิ่มได้!\n\nมีรายการในวันที่ ${entryDate} แล้วสำหรับ ${selectedCompany.name}:\n"${existingEntryForDate.title}"`
       );

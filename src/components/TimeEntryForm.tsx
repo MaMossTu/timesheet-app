@@ -33,10 +33,6 @@ export function TimeEntryForm({
   selectedDate,
   existingEntries = [],
 }: TimeEntryFormProps) {
-  console.log("=== Form received data ===");
-  console.log("selectedDate:", selectedDate, typeof selectedDate);
-  console.log("initialData:", initialData);
-
   const today = selectedDate
     ? typeof selectedDate === "string"
       ? new Date(selectedDate + "T12:00:00") // เพิ่ม time เพื่อหลีกเลี่ยง timezone issue
@@ -46,11 +42,6 @@ export function TimeEntryForm({
     : initialData?.startTime
     ? new Date(initialData.startTime)
     : new Date();
-
-  console.log("=== Calculated today ===");
-  console.log("today:", today);
-  console.log("today.toDateString():", today.toDateString());
-  console.log("today.toISOString():", today.toISOString());
   const start = new Date(today);
   start.setHours(9, 0, 0, 0);
   const end = new Date(today);
@@ -141,70 +132,31 @@ export function TimeEntryForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("=== FORM SUBMIT DEBUG ===");
-    console.log("initialData:", initialData);
-    console.log("initialData.id:", initialData?.id);
-
     // Check if this is editing an existing entry or creating a new one
     const isEditing = initialData && initialData.id;
-    console.log("isEditing:", isEditing);
 
     if (!isEditing) {
       // If it's a new entry, check if there's already an entry for this date
       const selectedDateString = formData.date.toISOString().split("T")[0];
-      console.log("=== NEW ENTRY VALIDATION ===");
-      console.log(
-        "Form validation: Checking for existing entries on",
-        selectedDateString
-      );
-      console.log("Total existingEntries:", existingEntries.length);
-      console.log("All existingEntries:", existingEntries);
 
       const existingEntriesForDate = existingEntries.filter((entry) => {
-        console.log("Checking entry:", entry);
-
         // Compare using the date field which should be more reliable
         if (entry.date) {
-          console.log(
-            `Comparing entry.date "${entry.date}" with "${selectedDateString}"`
-          );
-          const matches = entry.date === selectedDateString;
-          console.log("Date field match:", matches);
-          return matches;
+          return entry.date === selectedDateString;
         }
         // Fallback to comparing startTime if date field doesn't exist
         const entryDate = new Date(entry.startTime);
         const entryDateString = entryDate.toISOString().split("T")[0];
-        console.log(
-          `Comparing startTime-derived "${entryDateString}" with "${selectedDateString}"`
-        );
-        const matches = entryDateString === selectedDateString;
-        console.log("StartTime field match:", matches);
-        return matches;
+        return entryDateString === selectedDateString;
       });
-
-      console.log("=== VALIDATION RESULT ===");
-      console.log(
-        "Found existing entries for this date:",
-        existingEntriesForDate
-      );
-      console.log("Number of existing entries:", existingEntriesForDate.length);
 
       if (existingEntriesForDate.length > 0) {
         const existingEntry = existingEntriesForDate[0];
-        console.log(
-          "BLOCKING submission - found existing entry:",
-          existingEntry
-        );
         alert(
           `📅 วันละ 1 งานเท่านั้น!\n\nมีงานในวันที่ ${selectedDateString} แล้ว:\n"${existingEntry.title}"\n\nกรุณาลบงานเดิมก่อน หรือแก้ไขงานที่มีอยู่แทน`
         );
         return;
       }
-
-      console.log("ALLOWING submission - no existing entries found");
-    } else {
-      console.log("EDITING existing entry:", initialData);
     }
 
     if (onSubmit) {
