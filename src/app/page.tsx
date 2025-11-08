@@ -64,6 +64,13 @@ export default function Home() {
     };
   }, [isDownloadOpen]);
 
+  // Redirect to login if no user
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
   // Export Functions
   const downloadXLSX = async () => {
     const previewData = generatePreviewData();
@@ -1073,7 +1080,15 @@ export default function Home() {
   }
 
   if (!user) {
-    return null;
+    router.push("/login");
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   // Function to calculate working hours (excluding lunch break 12:00-13:00)
