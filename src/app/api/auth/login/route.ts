@@ -1,5 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+
+// Demo users for fallback (when database is not available)
+const demoUsers = {
+  demo: {
+    id: "1",
+    email: "demo@example.com",
+    username: "demo",
+    name: "Demo User",
+    prefix: "Mr.",
+    selectedCompanyId: "company1_user1",
+    companies: [
+      {
+        id: "company1_user1",
+        name: "ABC Corporation",
+        code: "ABC",
+        description: "Technology Solutions Company",
+        approvedBy: "John Smith (Manager)",
+        userId: "1",
+      },
+    ],
+  },
+  admin: {
+    id: "2",
+    email: "admin@example.com",
+    username: "admin",
+    name: "kittapath sangvikukit",
+    prefix: "Mr.",
+    selectedCompanyId: "company1_user2",
+    companies: [
+      {
+        id: "company1_user2",
+        name: "Rabbit Corporation",
+        code: "RBT",
+        description: "Digital Innovation Company",
+        approvedBy: "Boss Manager",
+        userId: "2",
+      },
+    ],
+  },
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,24 +51,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For demo purposes, we'll use simple hardcoded credentials
-    // In production, use proper password hashing (bcrypt, argon2, etc.)
     let user = null;
 
-    if (username === "demo" && password === "demo123") {
-      user = await prisma.user.findUnique({
-        where: { username: "demo" },
-        include: {
-          companies: true,
-        },
-      });
-    } else if (username === "admin" && password === "admin") {
-      user = await prisma.user.findUnique({
-        where: { username: "admin" },
-        include: {
-          companies: true,
-        },
-      });
+    // Check credentials
+    if (
+      (username === "demo" && password === "demo123") ||
+      (username === "admin" && password === "admin")
+    ) {
+      // Try database first
+      try {
+        const { prisma } = await import("@/lib/prisma");
+        user = await prisma.user.findUnique({
+          where: { username },
+          include: {
+            companies: true,
+          },
+        });
+      } catch (dbError) {
+        console.log("Database unavailable, using demo data:", dbError);
+      }
+
+      // Fallback to demo data if database fails
+      if (!user && demoUsers[username as keyof typeof demoUsers]) {
+        user = demoUsers[username as keyof typeof demoUsers];
+        console.log("Using demo user data for:", username);
+      }
     }
 
     if (!user) {
