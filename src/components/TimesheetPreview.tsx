@@ -158,7 +158,21 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
                   {entry.title}
                   {entry.description ? ` - ${entry.description}` : ""}
                 </td>
-                <td className="border-2 border-black p-4 text-center font-medium text-black text-base"></td>
+                <td className="border-2 border-black p-4 text-center font-medium text-black text-base">
+                  <button
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded"
+                    onClick={async () => {
+                      if (confirm("ยืนยันการลบรายการนี้?")) {
+                        await fetch(`/api/time-entries?id=${entry.id}`, {
+                          method: "DELETE",
+                        });
+                        window.location.reload();
+                      }
+                    }}
+                  >
+                    ลบ
+                  </button>
+                </td>
               </tr>
             ))
           )}
