@@ -143,6 +143,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // บันทึก timeEntries ลง localStorage เมื่อมีการเปลี่ยนแปลง
   useEffect(() => {
+    if (timeEntries.length >= 0) {
+      // รวมถึงกรณีที่ array ว่าง
+      localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
+    }
+  }, [timeEntries]);
+
+  // บันทึก timeEntries ลง localStorage เมื่อมีการเปลี่ยนแปลง
+  useEffect(() => {
     if (timeEntries.length > 0) {
       localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
     }
@@ -252,18 +260,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       companyId: selectedCompany.id,
     };
 
-    setTimeEntries((prev) => [...prev, newEntry]);
+    const updatedEntries = [...timeEntries, newEntry];
+    setTimeEntries(updatedEntries);
     return true;
   };
 
   const updateTimeEntry = (id: string, updates: Partial<TimeEntry>) => {
-    setTimeEntries((prev) =>
-      prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
+    const updatedEntries = timeEntries.map((entry) =>
+      entry.id === id ? { ...entry, ...updates } : entry
     );
+    setTimeEntries(updatedEntries);
   };
-
   const deleteTimeEntry = (id: string) => {
-    setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
+    const updatedEntries = timeEntries.filter((entry) => entry.id !== id);
+    setTimeEntries(updatedEntries);
   };
 
   const updateProfile = (updates: Partial<User>): boolean => {
@@ -327,17 +337,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  // Filter time entries สำหรับ user ปัจจุบันและบริษัทที่เลือก
-  const userTimeEntries = timeEntries.filter(
-    (entry) =>
-      entry.userId === user?.id && entry.companyId === selectedCompany?.id
-  );
-
+  // ส่งข้อมูล timeEntries ทั้งหมด และให้ component เป็นคนจัดการ filter
   return (
     <AuthContext.Provider
       value={{
         user,
-        timeEntries: userTimeEntries,
+        timeEntries,
         selectedCompany,
         login,
         register,

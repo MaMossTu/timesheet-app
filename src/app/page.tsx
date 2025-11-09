@@ -998,10 +998,12 @@ export default function Home() {
     const currentMonth = selectedDate.getMonth() + 1;
     const currentYear = selectedDate.getFullYear();
 
-    // Filter entries for current month
+    // Filter entries for current month (สำหรับ user และ company ปัจจุบัน)
     const monthEntries = timeEntries.filter((entry) => {
       const entryDate = new Date(entry.date);
       return (
+        entry.userId === user?.id &&
+        entry.companyId === selectedCompany?.id &&
         entryDate.getMonth() + 1 === currentMonth &&
         entryDate.getFullYear() === currentYear
       );
@@ -1488,7 +1490,9 @@ export default function Home() {
             <TimeTrackingCalendar
               ref={calendarRef}
               timeEntries={timeEntries.filter(
-                (entry) => entry.companyId === selectedCompany?.id
+                (entry) =>
+                  entry.userId === user?.id &&
+                  entry.companyId === selectedCompany?.id
               )}
               initialDate={selectedDate}
               onDateClick={(date: Date) => {
@@ -1500,6 +1504,7 @@ export default function Home() {
 
                 const entriesForDate = timeEntries.filter(
                   (entry) =>
+                    entry.userId === user?.id &&
                     entry.date === dateString &&
                     entry.companyId === selectedCompany?.id
                 );
@@ -1538,7 +1543,9 @@ export default function Home() {
             </div>
             <div className="divide-y divide-gray-200">
               {timeEntries.filter(
-                (entry) => entry.companyId === selectedCompany?.id
+                (entry) =>
+                  entry.userId === user?.id &&
+                  entry.companyId === selectedCompany?.id
               ).length === 0 ? (
                 <div className="p-8 text-center">
                   <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -1551,7 +1558,11 @@ export default function Home() {
                 </div>
               ) : (
                 timeEntries
-                  .filter((entry) => entry.companyId === selectedCompany?.id)
+                  .filter(
+                    (entry) =>
+                      entry.userId === user?.id &&
+                      entry.companyId === selectedCompany?.id
+                  )
                   .sort(
                     (a, b) =>
                       new Date(b.date || b.startTime).getTime() -
@@ -1701,7 +1712,9 @@ export default function Home() {
               : new Date()
           }
           existingEntries={timeEntries.filter(
-            (entry) => entry.companyId === selectedCompany?.id
+            (entry) =>
+              entry.userId === user?.id &&
+              entry.companyId === selectedCompany?.id
           )}
         />
       )}
@@ -1727,7 +1740,8 @@ export default function Home() {
           onUpdateCompany={updateCompany}
           onDeleteCompany={(companyId: string) => {
             const companyEntries = timeEntries.filter(
-              (entry) => entry.companyId === companyId
+              (entry) =>
+                entry.userId === user?.id && entry.companyId === companyId
             );
             companyEntries.forEach((entry) => deleteTimeEntry(entry.id));
 
