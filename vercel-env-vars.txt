@@ -1,11 +1,15 @@
 # Environment Variables สำหรับ Vercel Production
 # Copy ค่าเหล่านี้ไปใส่ใน Vercel Dashboard > Settings > Environment Variables
 
+DATABASE_URL=file:./dev.db
 NEXTAUTH_SECRET=your-super-secret-key-change-this-in-production-make-it-long-and-random
 NEXTAUTH_URL=https://your-app-name.vercel.app
 NODE_ENV=production
 
 # หมายเหตุ:
+# - DATABASE_URL ใส่ file:./dev.db สำหรับ SQLite
 # - NEXTAUTH_SECRET ให้ใช้ string ยาวๆ สุ่ม เช่น: openssl rand -base64 32
 # - NEXTAUTH_URL จะได้จาก Vercel หลังจาก deploy แล้ว
 # - เปลี่ยน your-app-name เป็นชื่อจริงที่ Vercel สร้างให้
+
+# *** สำคัญ: ต้องเพิ่ม DATABASE_URL ใน Vercel เพื่อให้ Prisma ทำงานได้ ***
