@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  username          String?   @unique
+  name              String?
+  prefix            String?
+  selectedCompanyId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  companies         Company[]
+  timeEntries       TimeEntry[]
+  
+  @@map("users")
+}
+
+model Company {
+  id          String     @id @default(cuid())
+  name        String
+  code        String?
+  description String?
+  approvedBy  String?
+  dateSign    String?    // วันที่ลงนามในเอกสาร
+  userId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
+
+  @@map("companies")
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   String   // ISO string
+  endTime     String?  // ISO string
+  date        String   // YYYY-MM-DD format
+  userId      String
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("time_entries")
+}

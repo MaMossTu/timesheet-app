@@ -48,15 +48,23 @@ interface AuthContextType {
     name?: string
   ) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (updates: Partial<User>) => boolean;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
+  changePassword: (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => Promise<boolean>;
   addTimeEntry: (
     entry: Omit<TimeEntry, "id" | "userId" | "companyId">
-  ) => boolean;
-  updateTimeEntry: (id: string, entry: Partial<TimeEntry>) => void;
-  deleteTimeEntry: (id: string) => void;
+  ) => Promise<boolean>;
+  updateTimeEntry: (id: string, entry: Partial<TimeEntry>) => Promise<void>;
+  deleteTimeEntry: (id: string) => Promise<void>;
   selectCompany: (companyId: string) => void;
-  addCompany: (company: Omit<Company, "id">) => boolean;
-  updateCompany: (companyId: string, updates: Partial<Company>) => boolean;
+  addCompany: (company: Omit<Company, "id">) => Promise<boolean>;
+  updateCompany: (
+    companyId: string,
+    updates: Partial<Company>
+  ) => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -117,64 +125,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ตรวจสอบ user ที่บันทึกไว้ใน localStorage
+  // โหลดข้อมูล user และ time entries จาก API และ localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedTimeEntries = localStorage.getItem("timeEntries");
+    const loadUserData = async () => {
+      const savedUser = localStorage.getItem("user");
 
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      // Set selected company from saved user data
-      if (userData.companies && userData.selectedCompanyId) {
-        const company = userData.companies.find(
-          (c: Company) => c.id === userData.selectedCompanyId
-        );
-        setSelectedCompany(company || null);
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+
+          // Set selected company from saved user data
+          if (userData.companies && userData.selectedCompanyId) {
+            const company = userData.companies.find(
+              (c: Company) => c.id === userData.selectedCompanyId
+            );
+            setSelectedCompany(company || null);
+          }
+
+          // โหลด time entries จาก API
+          await loadTimeEntries(userData.id);
+        } catch (error) {
+          console.error("Error loading user data:", error);
+          localStorage.removeItem("user");
+        }
       }
-    }
+      setIsLoading(false);
+    };
 
-    if (savedTimeEntries) {
-      setTimeEntries(JSON.parse(savedTimeEntries));
-    }
-
-    setIsLoading(false);
+    loadUserData();
   }, []);
 
-  // บันทึก timeEntries ลง localStorage เมื่อมีการเปลี่ยนแปลง
-  useEffect(() => {
-    if (timeEntries.length >= 0) {
-      // รวมถึงกรณีที่ array ว่าง
-      localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
+  // ฟังก์ชันโหลด time entries จาก API
+  const loadTimeEntries = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/time-entries?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTimeEntries(data.timeEntries || []);
+      }
+    } catch (error) {
+      console.error("Error loading time entries:", error);
     }
-  }, [timeEntries]);
+  };
 
-  // บันทึก timeEntries ลง localStorage เมื่อมีการเปลี่ยนแปลง
+  // บันทึก user ลง localStorage เมื่อมีการเปลี่ยนแปลง (Profile + Companies)
   useEffect(() => {
-    if (timeEntries.length > 0) {
-      localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
     }
-  }, [timeEntries]);
+  }, [user]);
 
   const login = async (
     username: string,
     password: string
   ): Promise<boolean> => {
     try {
-      // Simple demo authentication - now using username instead of email
-      const demoUser = DEMO_USERS.find(
-        (u) => u.username === username && u.password === password
-      );
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-      if (demoUser) {
-        const { password: _, ...userWithoutPassword } = demoUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+
+        // Set selected company
+        if (data.user.companies && data.user.selectedCompanyId) {
+          const company = data.user.companies.find(
+            (c: Company) => c.id === data.user.selectedCompanyId
+          );
+          setSelectedCompany(company || null);
+        }
+
+        // โหลด time entries
+        await loadTimeEntries(data.user.id);
+
         return true;
       }
 
       return false;
     } catch (error) {
+      console.error("Login error:", error);
       return false;
     }
   };
@@ -185,52 +220,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name?: string
   ): Promise<boolean> => {
     try {
-      // Check if user already exists
-      const existingUser = DEMO_USERS.find((u) => u.email === email);
-      if (existingUser) {
-        return false;
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+
+        // For new users, no company is selected initially
+        setSelectedCompany(null);
+
+        return true;
       }
 
-      // Create new user with all required fields
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        username: email.split("@")[0], // Use email prefix as default username
-        name: name || "New User",
-        prefix: "Mr.",
-        companies: DEMO_COMPANIES,
-        selectedCompanyId: "company1",
-      };
-
-      // Add to demo users (with required fields)
-      const demoUser = {
-        ...newUser,
-        password,
-        username: newUser.username!,
-        name: newUser.name!,
-        prefix: newUser.prefix!,
-        companies: newUser.companies!,
-        selectedCompanyId: newUser.selectedCompanyId!,
-      };
-      DEMO_USERS.push(demoUser);
-
-      setUser(newUser);
-      setSelectedCompany(DEMO_COMPANIES[0]); // Set first company as default
-      localStorage.setItem("user", JSON.stringify(newUser));
-      return true;
+      return false;
     } catch (error) {
+      console.error("Register error:", error);
       return false;
     }
   };
 
   const logout = () => {
     setUser(null);
+    setTimeEntries([]);
+    setSelectedCompany(null);
+    // ลบข้อมูลจาก localStorage
     localStorage.removeItem("user");
   };
 
-  const addTimeEntry = (
+  const addTimeEntry = async (
     entry: Omit<TimeEntry, "id" | "userId" | "companyId">
-  ): boolean => {
+  ): Promise<boolean> => {
     if (!user || !selectedCompany) return false;
 
     // ตรวจสอบว่ามีรายการในวันนี้แล้วหรือไม่ (สำหรับบริษัทนี้)
@@ -253,45 +278,129 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    const newEntry: TimeEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      userId: user.id,
-      companyId: selectedCompany.id,
-    };
+    try {
+      const response = await fetch("/api/time-entries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...entry,
+          userId: user.id,
+          companyId: selectedCompany.id,
+        }),
+      });
 
-    const updatedEntries = [...timeEntries, newEntry];
-    setTimeEntries(updatedEntries);
-    return true;
+      if (response.ok) {
+        const data = await response.json();
+        setTimeEntries((prev) => [...prev, data.timeEntry]);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Add time entry error:", error);
+      return false;
+    }
   };
 
-  const updateTimeEntry = (id: string, updates: Partial<TimeEntry>) => {
-    const updatedEntries = timeEntries.map((entry) =>
-      entry.id === id ? { ...entry, ...updates } : entry
-    );
-    setTimeEntries(updatedEntries);
+  const updateTimeEntry = async (id: string, updates: Partial<TimeEntry>) => {
+    try {
+      const response = await fetch("/api/time-entries", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, ...updates }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTimeEntries((prev) =>
+          prev.map((entry) => (entry.id === id ? data.timeEntry : entry))
+        );
+      }
+    } catch (error) {
+      console.error("Update time entry error:", error);
+    }
   };
-  const deleteTimeEntry = (id: string) => {
-    const updatedEntries = timeEntries.filter((entry) => entry.id !== id);
-    setTimeEntries(updatedEntries);
+  const deleteTimeEntry = async (id: string) => {
+    try {
+      const response = await fetch(`/api/time-entries?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
+      }
+    } catch (error) {
+      console.error("Delete time entry error:", error);
+    }
   };
 
-  const updateProfile = (updates: Partial<User>): boolean => {
+  const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
     if (!user) return false;
 
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: user.id, ...updates }),
+      });
 
-    // Update selected company if changed
-    if (updates.selectedCompanyId && user.companies) {
-      const company = user.companies.find(
-        (c) => c.id === updates.selectedCompanyId
-      );
-      setSelectedCompany(company || null);
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+
+        // Update selected company if changed
+        if (updates.selectedCompanyId && data.user.companies) {
+          const company = data.user.companies.find(
+            (c: Company) => c.id === updates.selectedCompanyId
+          );
+          setSelectedCompany(company || null);
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return false;
     }
+  };
 
-    return true;
+  const changePassword = async (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      if (response.ok) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Change password error:", error);
+      return false;
+    }
   };
 
   const selectCompany = (companyId: string) => {
@@ -304,37 +413,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addCompany = (company: Omit<Company, "id">): boolean => {
+  const addCompany = async (company: Omit<Company, "id">): Promise<boolean> => {
     if (!user) return false;
 
-    const newCompany: Company = {
-      ...company,
-      id: Date.now().toString(),
-    };
+    try {
+      const response = await fetch("/api/companies", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...company, userId: user.id }),
+      });
 
-    const updatedCompanies = [...(user.companies || []), newCompany];
-    updateProfile({ companies: updatedCompanies });
-    return true;
+      if (response.ok) {
+        const data = await response.json();
+        const updatedUser = {
+          ...user,
+          companies: [...(user.companies || []), data.company],
+        };
+        setUser(updatedUser);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Add company error:", error);
+      return false;
+    }
   };
 
-  const updateCompany = (
+  const updateCompany = async (
     companyId: string,
     updates: Partial<Company>
-  ): boolean => {
+  ): Promise<boolean> => {
     if (!user?.companies) return false;
 
-    const updatedCompanies = user.companies.map((company) =>
-      company.id === companyId ? { ...company, ...updates } : company
-    );
+    try {
+      const response = await fetch("/api/companies", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: companyId, userId: user.id, ...updates }),
+      });
 
-    updateProfile({ companies: updatedCompanies });
+      if (response.ok) {
+        const data = await response.json();
 
-    // Update selected company if it was the one being updated
-    if (selectedCompany?.id === companyId) {
-      setSelectedCompany({ ...selectedCompany, ...updates });
+        // Update user's companies list
+        const updatedCompanies = user.companies.map((company) =>
+          company.id === companyId ? data.company : company
+        );
+
+        const updatedUser = { ...user, companies: updatedCompanies };
+        setUser(updatedUser);
+
+        // Update selected company if it was the one being updated
+        if (selectedCompany?.id === companyId) {
+          setSelectedCompany(data.company);
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Update company error:", error);
+      return false;
     }
-
-    return true;
   };
 
   // ส่งข้อมูล timeEntries ทั้งหมด และให้ component เป็นคนจัดการ filter
@@ -348,6 +494,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         updateProfile,
+        changePassword,
         addTimeEntry,
         updateTimeEntry,
         deleteTimeEntry,

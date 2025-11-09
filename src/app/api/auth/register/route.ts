@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,22 +12,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // สำหรับ demo version นี้ จะ return success เสมอ
-    // ใน production ควรใช้ database จริง
+    // ตรวจสอบว่า email นี้มีอยู่แล้วหรือไม่
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    // สร้าง mock user object
-    const user = {
-      id: Date.now().toString(),
-      email,
-      name: name || "ผู้ใช้ใหม่",
-      username: email.split("@")[0],
-    };
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Email นี้มีอยู่ในระบบแล้ว" },
+        { status: 409 }
+      );
+    }
+
+    // สร้าง user ใหม่
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: name || "ผู้ใช้ใหม่",
+        username: email.split("@")[0],
+      },
+      include: {
+        companies: true,
+      },
+    });
 
     return NextResponse.json({
       user: user,
       message: "สมัครสมาชิกสำเร็จ",
     });
   } catch (error) {
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

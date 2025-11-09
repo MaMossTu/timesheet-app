@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-// GET - ดึงข้อมูล time entries (Mock implementation)
+// GET - ดึงข้อมูล time entries
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -10,11 +11,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User ID จำเป็น" }, { status: 400 });
     }
 
-    // Return empty array since we're using localStorage on client-side
-    const timeEntries: any[] = [];
+    const timeEntries = await prisma.timeEntry.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        company: true,
+        user: true,
+      },
+    });
 
     return NextResponse.json({ timeEntries });
   } catch (error) {
+    console.error("GET time entries error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -22,22 +30,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - สร้าง time entry ใหม่ (Mock implementation)
+// POST - สร้าง time entry ใหม่
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const { title, description, startTime, endTime, date, userId, companyId } =
+      await request.json();
 
-    // For demo purposes, just return success
-    return NextResponse.json({
-      timeEntry: {
-        id: Date.now().toString(),
-        ...body,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+    if (!title || !startTime || !userId || !companyId) {
+      return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
+    }
+
+    const timeEntry = await prisma.timeEntry.create({
+      data: {
+        title,
+        description,
+        startTime,
+        endTime,
+        date,
+        userId,
+        companyId,
       },
+      include: {
+        company: true,
+        user: true,
+      },
+    });
+
+    return NextResponse.json({
+      timeEntry,
       message: "บันทึกเวลาทำงานสำเร็จ",
     });
   } catch (error) {
+    console.error("POST time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -45,20 +69,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - อัปเดต time entry (Mock implementation)
+// PUT - อัปเดต time entry
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const { id, ...updateData } = await request.json();
 
-    // For demo purposes, just return success
-    return NextResponse.json({
-      timeEntry: {
-        ...body,
-        updatedAt: new Date().toISOString(),
+    if (!id) {
+      return NextResponse.json({ error: "ID จำเป็น" }, { status: 400 });
+    }
+
+    const timeEntry = await prisma.timeEntry.update({
+      where: { id },
+      data: updateData,
+      include: {
+        company: true,
+        user: true,
       },
+    });
+
+    return NextResponse.json({
+      timeEntry,
       message: "อัปเดตเวลาทำงานสำเร็จ",
     });
   } catch (error) {
+    console.error("PUT time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }
@@ -66,7 +100,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - ลบ time entry (Mock implementation)
+// DELETE - ลบ time entry
 export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -76,11 +110,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID จำเป็น" }, { status: 400 });
     }
 
-    // For demo purposes, just return success
+    await prisma.timeEntry.delete({
+      where: { id },
+    });
+
     return NextResponse.json({
       message: "ลบเวลาทำงานสำเร็จ",
     });
   } catch (error) {
+    console.error("DELETE time entry error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

@@ -1,52 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Mock users data (replace with real database in production)
-const mockUsers = [
-  {
-    id: "1",
-    email: "admin@example.com",
-    password: "admin123", // In production, this should be hashed
-    name: "Admin User",
-    username: "admin",
-  },
-  {
-    id: "2",
-    email: "user@example.com",
-    password: "user123",
-    name: "Regular User",
-    username: "user",
-  },
-];
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: "Email และ password จำเป็น" },
+        { error: "Username และ password จำเป็น" },
         { status: 400 }
       );
     }
 
-    // หาผู้ใช้ใน mock data
-    const user = mockUsers.find((u) => u.email === email);
+    // For demo purposes, we'll use simple hardcoded credentials
+    // In production, use proper password hashing (bcrypt, argon2, etc.)
+    let user = null;
 
-    if (!user || user.password !== password) {
+    if (username === "demo" && password === "demo123") {
+      user = await prisma.user.findUnique({
+        where: { username: "demo" },
+        include: {
+          companies: true,
+        },
+      });
+    } else if (username === "admin" && password === "admin") {
+      user = await prisma.user.findUnique({
+        where: { username: "admin" },
+        include: {
+          companies: true,
+        },
+      });
+    }
+
+    if (!user) {
       return NextResponse.json(
-        { error: "Email หรือ password ไม่ถูกต้อง" },
+        { error: "Username หรือ password ไม่ถูกต้อง" },
         { status: 401 }
       );
     }
 
-    // ส่งผลลัพธ์กลับ (ไม่รวม password)
-    const { password: _, ...userWithoutPassword } = user;
-
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: user,
       message: "Login สำเร็จ",
     });
   } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในระบบ" },
       { status: 500 }

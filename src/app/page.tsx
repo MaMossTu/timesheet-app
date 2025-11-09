@@ -33,6 +33,7 @@ export default function Home() {
     updateTimeEntry,
     deleteTimeEntry,
     updateProfile,
+    changePassword,
     addCompany,
     updateCompany,
   } = useAuth();
@@ -1684,25 +1685,33 @@ export default function Home() {
             setIsFormOpen(false);
             setFormInitialData(undefined);
           }}
-          onSubmit={(timeEntry) => {
+          onSubmit={async (timeEntry) => {
             if (formInitialData?.id) {
-              updateTimeEntry(formInitialData.id, {
+              await updateTimeEntry(formInitialData.id, {
                 ...timeEntry,
                 startTime: timeEntry.startTime.toISOString(),
                 endTime: timeEntry.endTime?.toISOString(),
               });
             } else {
-              addTimeEntry({
+              await addTimeEntry({
                 ...timeEntry,
                 startTime: timeEntry.startTime.toISOString(),
                 endTime: timeEntry.endTime?.toISOString(),
                 date: timeEntry.startTime.toISOString().split("T")[0],
               });
             }
+
+            // ปิด form หลังจากบันทึกสำเร็จ
+            setIsFormOpen(false);
+            setFormInitialData(undefined);
           }}
           onDelete={
             formInitialData?.id
-              ? () => deleteTimeEntry(formInitialData.id)
+              ? async () => {
+                  await deleteTimeEntry(formInitialData.id);
+                  setIsFormOpen(false);
+                  setFormInitialData(undefined);
+                }
               : undefined
           }
           initialData={formInitialData}
@@ -1723,10 +1732,11 @@ export default function Home() {
         <ProfileEditForm
           isOpen={isProfileOpen}
           onClose={() => setIsProfileOpen(false)}
-          onSubmit={(updates) => {
-            updateProfile(updates);
+          onSubmit={async (updates) => {
+            await updateProfile(updates);
             setIsProfileOpen(false);
           }}
+          onPasswordChange={changePassword}
           user={user}
         />
       )}
@@ -1738,27 +1748,36 @@ export default function Home() {
           user={user}
           onAddCompany={addCompany}
           onUpdateCompany={updateCompany}
-          onDeleteCompany={(companyId: string) => {
-            const companyEntries = timeEntries.filter(
-              (entry) =>
-                entry.userId === user?.id && entry.companyId === companyId
-            );
-            companyEntries.forEach((entry) => deleteTimeEntry(entry.id));
-
-            if (user.companies) {
-              const updatedCompanies = user.companies.filter(
-                (c) => c.id !== companyId
+          onDeleteCompany={async (companyId: string) => {
+            try {
+              // ลบ company ผ่าน API (API จะจัดการลบ time entries ด้วย)
+              const response = await fetch(
+                `/api/companies?id=${companyId}&userId=${user?.id}`,
+                {
+                  method: "DELETE",
+                }
               );
-              updateProfile({ companies: updatedCompanies });
 
-              if (
-                user.selectedCompanyId === companyId &&
-                updatedCompanies.length > 0
-              ) {
-                selectCompany(updatedCompanies[0].id);
+              if (response.ok && user?.companies) {
+                const updatedCompanies = user.companies.filter(
+                  (c) => c.id !== companyId
+                );
+
+                // อัพเดต user ผ่าน updateProfile
+                await updateProfile({ companies: updatedCompanies });
+
+                if (
+                  user.selectedCompanyId === companyId &&
+                  updatedCompanies.length > 0
+                ) {
+                  selectCompany(updatedCompanies[0].id);
+                }
               }
+              return true;
+            } catch (error) {
+              console.error("Delete company error:", error);
+              return false;
             }
-            return true;
           }}
         />
       )}

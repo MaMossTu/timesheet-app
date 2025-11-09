@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, User, Save } from "lucide-react";
+import { X, User, Save, Key } from "lucide-react";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 
 interface User {
   id: string;
@@ -14,7 +15,12 @@ interface User {
 interface ProfileEditFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (updates: Partial<User>) => void;
+  onSubmit: (updates: Partial<User>) => Promise<void>;
+  onPasswordChange: (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => Promise<boolean>;
   user: User;
 }
 
@@ -22,18 +28,19 @@ export function ProfileEditForm({
   isOpen,
   onClose,
   onSubmit,
+  onPasswordChange,
   user,
 }: ProfileEditFormProps) {
   const [formData, setFormData] = useState({
     prefix: user?.prefix || "",
     name: user?.name || "",
     username: user?.username || "",
-    password: "",
   });
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    await onSubmit(formData);
     onClose();
   };
 
@@ -112,20 +119,16 @@ export function ProfileEditForm({
               />
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2 tracking-wide">
-                🔒 Password
-              </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-sm text-gray-900 bg-white shadow-sm hover:shadow-md font-medium"
-                placeholder="Enter new password (leave blank to keep current)"
-              />
+            {/* Change Password Button */}
+            <div className="border-t border-gray-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowPasswordForm(true)}
+                className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <Key className="w-4 h-4" />
+                เปลี่ยน Password
+              </button>
             </div>
 
             {/* Buttons */}
@@ -148,6 +151,13 @@ export function ProfileEditForm({
           </form>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordForm
+        isOpen={showPasswordForm}
+        onClose={() => setShowPasswordForm(false)}
+        onSubmit={onPasswordChange}
+      />
     </div>
   );
 }

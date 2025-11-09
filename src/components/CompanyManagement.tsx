@@ -35,9 +35,12 @@ interface CompanyManagementProps {
   isOpen: boolean;
   onClose: () => void;
   user: User;
-  onAddCompany: (company: Omit<Company, "id">) => boolean;
-  onUpdateCompany: (companyId: string, updates: Partial<Company>) => boolean;
-  onDeleteCompany: (companyId: string) => boolean;
+  onAddCompany: (company: Omit<Company, "id">) => Promise<boolean>;
+  onUpdateCompany: (
+    companyId: string,
+    updates: Partial<Company>
+  ) => Promise<boolean>;
+  onDeleteCompany: (companyId: string) => Promise<boolean>;
 }
 
 export function CompanyManagement({
@@ -59,11 +62,11 @@ export function CompanyManagement({
 
   if (!isOpen) return null;
 
-  const handleAddCompany = (e: React.FormEvent) => {
+  const handleAddCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCompany.name.trim()) return;
 
-    const success = onAddCompany({
+    const success = await onAddCompany({
       name: newCompany.name.trim(),
       approvedBy: newCompany.approvedBy.trim() || undefined,
       dateSign: newCompany.dateSign.trim() || undefined,
@@ -80,10 +83,10 @@ export function CompanyManagement({
     setEditData({ ...company });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editData) return;
 
-    const success = onUpdateCompany(editData.id, {
+    const success = await onUpdateCompany(editData.id, {
       name: editData.name.trim(),
       approvedBy: editData.approvedBy?.trim() || undefined,
       dateSign: editData.dateSign?.trim() || undefined,
@@ -100,13 +103,13 @@ export function CompanyManagement({
     setEditData(null);
   };
 
-  const handleDeleteCompany = (companyId: string) => {
+  const handleDeleteCompany = async (companyId: string) => {
     if (
       window.confirm(
         "⚠️ ต้องการลบบริษัทนี้หรือไม่?\n\nข้อมูล timesheet ทั้งหมดจะถูกลบด้วย"
       )
     ) {
-      onDeleteCompany(companyId);
+      await onDeleteCompany(companyId);
     }
   };
 
