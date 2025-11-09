@@ -112,28 +112,22 @@ export async function DELETE(request: NextRequest) {
     const id = url.searchParams.get("id");
     const userId = url.searchParams.get("userId");
 
-    if (!id || !userId) {
-      return NextResponse.json(
-        { error: "ID และ User ID จำเป็น" },
-        { status: 400 }
-      );
+    if (!id) {
+      return NextResponse.json({ error: "ID จำเป็น" }, { status: 400 });
     }
 
-    // ตรวจสอบว่าเป็นเจ้าของ company นี้
+    // ตรวจสอบว่ามี company จริง
     const existingCompany = await prisma.company.findUnique({
       where: { id },
     });
 
-    if (!existingCompany || existingCompany.userId !== userId) {
-      return NextResponse.json(
-        { error: "ไม่พบบริษัทหรือไม่มีสิทธิ์ลบ" },
-        { status: 404 }
-      );
+    if (!existingCompany) {
+      return NextResponse.json({ error: "ไม่พบบริษัท" }, { status: 404 });
     }
 
     // ลบ time entries ที่เกี่ยวข้องก่อน
     await prisma.timeEntry.deleteMany({
-      where: { companyId: id, userId },
+      where: { companyId: id },
     });
 
     // ลบ company
