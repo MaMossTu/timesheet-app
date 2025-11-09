@@ -25,9 +25,28 @@ interface TimesheetPreviewProps {
 export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
   // ฟังก์ชันแปลง data.month ("MM/YYYY") เป็นวันที่สุดท้ายของเดือนนั้น
   const getLastDateOfMonth = (monthYear: string) => {
-    const [month, year] = monthYear.split("/").map(Number);
+    let month, year;
+    if (monthYear.includes("/")) {
+      // MM/YYYY หรือ YYYY/MM
+      const parts = monthYear.split("/").map(Number);
+      if (parts[0] > 12) {
+        // YYYY/MM
+        year = parts[0];
+        month = parts[1];
+      } else {
+        // MM/YYYY
+        month = parts[0];
+        year = parts[1];
+      }
+    } else if (monthYear.includes("-")) {
+      // YYYY-MM
+      const parts = monthYear.split("-").map(Number);
+      year = parts[0];
+      month = parts[1];
+    }
     if (!month || !year) return "";
-    // month - 1 เพราะ JS month เริ่มที่ 0
+    // DEBUG: log month/year
+    // console.log('Export month:', month, 'year:', year);
     const lastDay = new Date(year, month, 0); // month = เดือนถัดไป, day=0 คือวันสุดท้ายของเดือนจริง
     return lastDay.toLocaleDateString("en-GB", {
       day: "2-digit",
