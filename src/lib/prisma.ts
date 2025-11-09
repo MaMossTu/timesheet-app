@@ -11,13 +11,11 @@ export const prisma =
       process.env.NODE_ENV === "development"
         ? ["query", "error", "warn"]
         : ["error"],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL || "file:./dev.db",
+      },
+    },
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-
-// Ensure connection is tested
-if (process.env.NODE_ENV === "production") {
-  prisma.$connect().catch((error) => {
-    console.error("Failed to connect to database:", error);
-  });
-}
