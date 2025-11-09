@@ -33,12 +33,29 @@ export default function DatabaseViewer() {
 
       if (response.ok) {
         const result = await response.json();
-        setData(result.data);
+        console.log("API Response:", result);
+
+        if (result.success && result.data) {
+          setData(result.data);
+        } else {
+          setError(`API Error: ${result.error || "Unknown error"}`);
+        }
       } else {
-        setError("ไม่สามารถดึงข้อมูลได้ - ตรวจสอบ Admin Key");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error:", response.status, errorData);
+        setError(
+          `HTTP ${response.status}: ${
+            errorData.error || "ไม่สามารถดึงข้อมูลได้"
+          }`
+        );
       }
     } catch (err) {
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      console.error("Fetch Error:", err);
+      setError(
+        `เกิดข้อผิดพลาด: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     } finally {
       setLoading(false);
     }
