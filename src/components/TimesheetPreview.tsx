@@ -23,6 +23,17 @@ interface TimesheetPreviewProps {
 }
 
 export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
+  // ฟังก์ชันแปลง data.month ("MM/YYYY") เป็นวันที่สุดท้ายของเดือนนั้น
+  const getLastDateOfMonth = (monthYear: string) => {
+    const [month, year] = monthYear.split("/").map(Number);
+    if (!month || !year) return "";
+    const lastDay = new Date(year, month, 0); // วันที่ 0 ของเดือนถัดไป = วันสุดท้ายของเดือนนี้
+    return lastDay.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
@@ -219,7 +230,7 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
           <p className="text-black text-base">( {data.employee} )</p>
           <br />
           <p className="text-black text-base">
-            Date_________25/10/2025_______________
+            Date_________{getLastDateOfMonth(data.month)}_______________
           </p>
         </div>
         <div className="text-left">
@@ -229,7 +240,7 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
           <p className="text-black text-base">( {data.approvedBy} )</p>
           <br />
           <p className="text-black text-base">
-            Date_________25/10/2025_______________
+            Date_________{getLastDateOfMonth(data.month)}_______________
           </p>
         </div>
       </div>
