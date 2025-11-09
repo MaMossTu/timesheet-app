@@ -27,7 +27,8 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
   const getLastDateOfMonth = (monthYear: string) => {
     const [month, year] = monthYear.split("/").map(Number);
     if (!month || !year) return "";
-    const lastDay = new Date(year, month, 0); // วันที่ 0 ของเดือนถัดไป = วันสุดท้ายของเดือนนี้
+    // month - 1 เพราะ JS month เริ่มที่ 0
+    const lastDay = new Date(year, month, 0); // month = เดือนถัดไป, day=0 คือวันสุดท้ายของเดือนจริง
     return lastDay.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
