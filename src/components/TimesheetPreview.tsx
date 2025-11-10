@@ -27,27 +27,22 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
   const getLastDateOfMonth = (monthYear: string) => {
     let month, year;
     if (monthYear.includes("/")) {
-      // MM/YYYY หรือ YYYY/MM
       const parts = monthYear.split("/").map(Number);
       if (parts[0] > 12) {
-        // YYYY/MM
         year = parts[0];
         month = parts[1];
       } else {
-        // MM/YYYY
         month = parts[0];
         year = parts[1];
       }
     } else if (monthYear.includes("-")) {
-      // YYYY-MM
       const parts = monthYear.split("-").map(Number);
       year = parts[0];
       month = parts[1];
     }
     if (!month || !year) return "";
-    // DEBUG: log month/year
-    // console.log('Export month:', month, 'year:', year);
-    const lastDay = new Date(year, month, 0); // month = เดือนถัดไป, day=0 คือวันสุดท้ายของเดือนจริง
+    // month = 11 (Nov) → new Date(2025, 11, 0) = 30/11/2025
+    const lastDay = new Date(year, month, 0);
     return lastDay.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
