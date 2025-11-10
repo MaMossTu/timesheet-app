@@ -1040,30 +1040,19 @@ export default function Home() {
         user?.companies?.find((c: any) => c.id === selectedCompany?.id)
           ?.approvedBy || "Mr. Auttapong Budhsombatwarakul",
       dateSign: (() => {
-        const companyDateSign = (
-          user?.companies?.find((c: any) => c.id === selectedCompany?.id) as any
-        )?.dateSign;
-
-        if (companyDateSign) {
-          // Get the day from company setting (just the day, stored as "01", "02", etc.)
-          const dayFromCompany = companyDateSign; // This is now just the day
-
-          // Create date using the day from company but month/year from exported period
-          const exportDate = new Date(
-            currentYear,
-            currentMonth,
-            parseInt(dayFromCompany)
-          );
-
-          return exportDate.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          });
+        // Always use selected month -1 for signature date
+        let signMonth = currentMonth - 1;
+        let signYear = currentYear;
+        if (signMonth < 1) {
+          signMonth = 12;
+          signYear = currentYear - 1;
         }
-
-        // Default to current date if no dateSign is set
-        return new Date().toLocaleDateString("en-GB", {
+        // Use today's day, but capped at last day of that month
+        const today = new Date();
+        const lastDay = new Date(signYear, signMonth, 0).getDate();
+        const day = Math.min(today.getDate(), lastDay);
+        const date = new Date(signYear, signMonth - 1, day);
+        return date.toLocaleDateString("en-GB", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
