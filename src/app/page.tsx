@@ -1040,18 +1040,11 @@ export default function Home() {
         user?.companies?.find((c: any) => c.id === selectedCompany?.id)
           ?.approvedBy || "Mr. Auttapong Budhsombatwarakul",
       dateSign: (() => {
-        // Always use selected month -1 for signature date
-        let signMonth = currentMonth - 1;
-        let signYear = currentYear;
-        if (signMonth < 1) {
-          signMonth = 12;
-          signYear = currentYear - 1;
-        }
-        // Use today's day, but capped at last day of that month
+        // Use selected month/year for signature date, with today's day capped at last day of month
         const today = new Date();
-        const lastDay = new Date(signYear, signMonth, 0).getDate();
+        const lastDay = new Date(currentYear, currentMonth, 0).getDate();
         const day = Math.min(today.getDate(), lastDay);
-        const date = new Date(signYear, signMonth - 1, day);
+        const date = new Date(currentYear, currentMonth - 1, day);
         return date.toLocaleDateString("en-GB", {
           day: "2-digit",
           month: "2-digit",
