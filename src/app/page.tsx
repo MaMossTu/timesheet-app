@@ -1040,7 +1040,23 @@ export default function Home() {
         user?.companies?.find((c: any) => c.id === selectedCompany?.id)
           ?.approvedBy || "Mr. Auttapong Budhsombatwarakul",
       dateSign: (() => {
-        // Use selected month/year for signature date, with today's day capped at last day of month
+        // Use company dateSign (day) if set, with selected month/year
+        const companyDateSign = (
+          user?.companies?.find((c: any) => c.id === selectedCompany?.id) as any
+        )?.dateSign;
+        if (companyDateSign) {
+          // companyDateSign is just the day (e.g. "25")
+          const day = parseInt(companyDateSign, 10);
+          const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+          const safeDay = Math.min(day, lastDay);
+          const date = new Date(currentYear, currentMonth - 1, safeDay);
+          return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+        }
+        // fallback: today's date capped at last day of selected month
         const today = new Date();
         const lastDay = new Date(currentYear, currentMonth, 0).getDate();
         const day = Math.min(today.getDate(), lastDay);
