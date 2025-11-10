@@ -23,7 +23,7 @@ interface TimesheetPreviewProps {
 }
 
 export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
-  // ฟังก์ชันคืนวันที่ลายเซ็น: เอาวันที่วันนี้ แต่เดือน/ปีตรงกับที่เลือก ถ้าเกินวันสุดท้ายของเดือนให้ใช้วันสุดท้าย
+  // ฟังก์ชันคืนวันที่ลายเซ็น: เอาวันที่วันนี้ แต่เดือน/ปีเป็นเดือนที่เลือก -1 (เดือนก่อนหน้า) ถ้าเกินวันสุดท้ายของเดือนให้ใช้วันสุดท้าย
   const getSignatureDate = (monthYear: string) => {
     let month, year;
     if (monthYear.includes("/")) {
@@ -41,12 +41,17 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
       month = parts[1];
     }
     if (!month || !year) return "";
+    // -1 month
+    let prevMonth = month - 1;
+    let prevYear = year;
+    if (prevMonth < 1) {
+      prevMonth = 12;
+      prevYear = year - 1;
+    }
     const today = new Date();
-    // หาวันสุดท้ายของเดือนที่เลือก
-    const lastDay = new Date(year, month, 0).getDate();
-    // ถ้าวันนี้เกินวันสุดท้ายของเดือนที่เลือก ให้ใช้วันสุดท้าย
+    const lastDay = new Date(prevYear, prevMonth, 0).getDate();
     const day = Math.min(today.getDate(), lastDay);
-    const date = new Date(year, month - 1, day);
+    const date = new Date(prevYear, prevMonth - 1, day);
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
