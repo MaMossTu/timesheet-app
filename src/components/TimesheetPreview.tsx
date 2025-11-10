@@ -23,8 +23,8 @@ interface TimesheetPreviewProps {
 }
 
 export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
-  // ฟังก์ชันแปลง data.month ("MM/YYYY") เป็นวันที่สุดท้ายของเดือนนั้น
-  const getLastDateOfMonth = (monthYear: string) => {
+  // ฟังก์ชันคืนวันที่ลายเซ็น: เอาวันที่วันนี้ แต่เดือน/ปีตรงกับที่เลือก ถ้าเกินวันสุดท้ายของเดือนให้ใช้วันสุดท้าย
+  const getSignatureDate = (monthYear: string) => {
     let month, year;
     if (monthYear.includes("/")) {
       const parts = monthYear.split("/").map(Number);
@@ -41,9 +41,13 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
       month = parts[1];
     }
     if (!month || !year) return "";
-    // month = 11 (Nov) → new Date(2025, 11, 0) = 30/11/2025
-    const lastDay = new Date(year, month, 0);
-    return lastDay.toLocaleDateString("en-GB", {
+    const today = new Date();
+    // หาวันสุดท้ายของเดือนที่เลือก
+    const lastDay = new Date(year, month, 0).getDate();
+    // ถ้าวันนี้เกินวันสุดท้ายของเดือนที่เลือก ให้ใช้วันสุดท้าย
+    const day = Math.min(today.getDate(), lastDay);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -245,7 +249,7 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
           <p className="text-black text-base">( {data.employee} )</p>
           <br />
           <p className="text-black text-base">
-            Date_________{getLastDateOfMonth(data.month)}_______________
+            Date_________{getSignatureDate(data.month)}_______________
           </p>
         </div>
         <div className="text-left">
@@ -255,7 +259,7 @@ export default function TimesheetPreview({ data }: TimesheetPreviewProps) {
           <p className="text-black text-base">( {data.approvedBy} )</p>
           <br />
           <p className="text-black text-base">
-            Date_________{getLastDateOfMonth(data.month)}_______________
+            Date_________{getSignatureDate(data.month)}_______________
           </p>
         </div>
       </div>
